@@ -342,6 +342,7 @@ if __name__ == '__main__':
     table_conn.update_create_entity(table_name='TableTest', entity=[{'PartitionKey': 'MTVH', 'RowKey': 'Action 0', 'Name': 'Ra'}])
     
     # #CREATE TABLE
+    
     # # table_conn.create_table(table_name='TableTest')
     
     # #CREATE RECORDS
