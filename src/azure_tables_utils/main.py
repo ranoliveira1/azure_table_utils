@@ -324,27 +324,34 @@ class AzureStorageTableClient:
 
 
 if __name__ == '__main__':
+    import os
     from time import perf_counter
+    from dotenv import load_dotenv
     
+    load_dotenv()
+    _accountname = os.getenv('accountname')
+    _accesskey = os.getenv('access_key')
+    
+
     table_conn = AzureStorageTableClient(
-        account_name='vulcansystemstorage',
-        access_key='IqVni/+zdWhZOXSA5ivrjbFFKrhjBQvoGnjrHxanuWDqQ1wBlZrfHutGtSwfUM4kO1S2wntleMQy+ASttgeJDg=='
+        account_name=_accountname,
+        access_key=_accesskey
     )
 
     table_conn.create_connection()
-    table_conn.update_create_entity(table_name='TableTest', entity=[{'PartitionKey': 'MTVH', 'RowKey': 'Action 0', 'Name': 'R'}])
+    table_conn.update_create_entity(table_name='TableTest', entity=[{'PartitionKey': 'MTVH', 'RowKey': 'Action 0', 'Name': 'Ra'}])
     
-    #CREATE TABLE
-    # table_conn.create_table(table_name='TableTest')
+    # #CREATE TABLE
+    # # table_conn.create_table(table_name='TableTest')
     
-    #CREATE RECORDS
-    # table_conn.update_create_entity(
-    #     table_name='TableTest',
-    #     entity=[
-    #         {'PartitionKey': 'MTVH', 'RowKey': f'Action {item}', 'Time': perf_counter()}
-    #         for item in range(2000)
-    #     ]
-    # )
+    # #CREATE RECORDS
+    # # table_conn.update_create_entity(
+    # #     table_name='TableTest',
+    # #     entity=[
+    # #         {'PartitionKey': 'MTVH', 'RowKey': f'Action {item}', 'Time': perf_counter()}
+    # #         for item in range(2000)
+    # #     ]
+    # # )
  
 
     
