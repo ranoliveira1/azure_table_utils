@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import List
+from typing import List, Literal
 import copy
 
 def ensure_attributes(*attribute_names):
@@ -65,7 +65,7 @@ def ensure_non_empty_string(*parameter_names):
     return decorator
 
 
-def create_entity_batch(entity:List[dict]) -> List:
+def create_entity_batch(mode: Literal['merge', 'replace'], entity:List[dict]) -> List:
     count = 0
     batch = []
     temp_batch = []
@@ -74,7 +74,7 @@ def create_entity_batch(entity:List[dict]) -> List:
 
     for idx, item in enumerate(entity, start=1):
         
-        temp_batch.append(('upsert', item, {"mode": "replace"}))
+        temp_batch.append(('upsert', item, {'mode': mode}))
         count += 1
         
         if count >= 100 or total_entities == idx:

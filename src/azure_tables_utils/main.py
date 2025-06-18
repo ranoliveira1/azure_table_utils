@@ -1,7 +1,7 @@
 from azure.data.tables import TableServiceClient, TableClient, UpdateMode
 from azure.core.credentials import AzureNamedKeyCredential
 from azure.core.exceptions import HttpResponseError, ServiceRequestError, ResourceExistsError
-from typing import List
+from typing import List, Literal
 import re, copy
 from utils import ensure_attributes, ensure_non_empty_string, create_entity_batch
 
@@ -139,6 +139,7 @@ class AzureStorageTableClient:
         
         try:
             self.table_service_client.create_table(table_name=table_name)
+            print(f'Table "{table_name}" successfully created')
             return True
         
         except (HttpResponseError, ServiceRequestError) as e:
@@ -181,6 +182,7 @@ class AzureStorageTableClient:
         
         try:
             self.table_service_client.delete_table(table_name=table_name)
+            print(f'Table "{table_name}" successfully deleted')
             return True
         
         except (HttpResponseError, ServiceRequestError) as e:
@@ -189,13 +191,15 @@ class AzureStorageTableClient:
 
     @ensure_attributes('table_service_client')
     @ensure_non_empty_string('table_name')
-    def update_create_entity(self, table_name:str, entity:List[dict]) -> None:
+    def update_create_entity(self, table_name:str, entity:List[dict], mode:Literal['merge', 'replace']='merge') -> None:
         '''
         If the table does not exist, it creates.
         Calls the function create_entity_batch() to create a list of lists with maximun of 100 entities.
         Creates/Updates an entity (similar to a row) to a table in the Azure Table of the Azure Storage account
-        If it already exists an entity with the same PartitionKey and RowKey, it will be updated with the mode UpdateMode.REPLACE,
-        replacing the existing entity with the given one, deleting any existing properties not included in the submitted entity.
+        If it already exists an entity with the same PartitionKey and RowKey, it will be updated with the mode:
+            - UpdateMode.REPLACE, replacing the existing entity with the given one, deleting any existing properties not included in the submitted entity
+            or 
+            - UpdateMode.MERGE, updating the existing entity only on the properties provided as argument
 
         
 
@@ -205,6 +209,10 @@ class AzureStorageTableClient:
             The name of the table where the entity will be created.
         entity : List[dict]
             A list of at least one dictionary, having this minimal elements {'PartitionKey': <non-empty string>, 'RowKey': <string>}
+        mode : Literal['merge', 'replace']
+            The mode up the updating the entity:
+                - replace, replacing the existing entity with the given one, deleting any existing properties not included in the submitted entity
+                - merge, updating the existing entity only on the properties provided as argument
         
         Returns
         ----------
@@ -250,13 +258,14 @@ class AzureStorageTableClient:
             raise type(e)(f'Failed to get a Table Client for the table "{table_name}": {str(e)}') from e
 
         try:
-            batchs = create_entity_batch(entity=entity)
+            batchs = create_entity_batch(entity=entity, mode=mode)
         except:
             raise Exception('Failed to create list of batchs of entities.')
         
         for batch in batchs:
             try:
                 table_client.submit_transaction(batch)
+                print('Entities successfully updated')
             except (HttpResponseError, ServiceRequestError) as e:
                 raise type(e)(f'Failed to create entities in the table "{table_name}"; entities {batch}: {str(e)}') from e
 
@@ -307,6 +316,33 @@ class AzureStorageTableClient:
         
         try:
             table_client.delete_entity(partition_key=partition_key, row_key=row_key)
+            print(f'Entity successfully deleted')
             return True
         except (HttpResponseError, ServiceRequestError) as e:
                 raise type(e)(f'Failed to delete entity {partition_key, row_key} from the table "{table_name}": {str(e)}') from e
+
+
+
+if __name__ == '__main__':
+    from time import perf_counter
+    
+    table_conn = AzureStorageTableClient(
+        account_name='vulcansystemstorage',
+        access_key='IqVni/+zdWhZOXSA5ivrjbFFKrhjBQvoGnjrHxanuWDqQ1wBlZrfHutGtSwfUM4kO1S2wntleMQy+ASttgeJDg=='
+    )
+
+    table_conn.create_connection()
+    table_conn.update_create_entity(table_name='TableTest', entity=[{'PartitionKey': 'MTVH', 'RowKey': 'Action 0', 'Name': 'R'}])
+    
+    #CREATE TABLE
+    # table_conn.create_table(table_name='TableTest')
+    
+    #CREATE RECORDS
+    # table_conn.update_create_entity(
+    #     table_name='TableTest',
+    #     entity=[
+    #         {'PartitionKey': 'MTVH', 'RowKey': f'Action {item}', 'Time': perf_counter()}
+    #         for item in range(2000)
+    #     ]
+    # )
+
