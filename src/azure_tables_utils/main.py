@@ -1,7 +1,7 @@
 from azure.data.tables import TableServiceClient, TableClient, UpdateMode
 from azure.core.credentials import AzureNamedKeyCredential
 from azure.core.exceptions import HttpResponseError, ServiceRequestError, ResourceExistsError
-from typing import List, Literal
+from typing import List, Literal, Dict, Any
 import re, copy
 from utils import ensure_attributes, ensure_non_empty_string, create_entity_batch
 
@@ -321,6 +321,54 @@ class AzureStorageTableClient:
         except (HttpResponseError, ServiceRequestError) as e:
                 raise type(e)(f'Failed to delete entity {partition_key, row_key} from the table "{table_name}": {str(e)}') from e
 
+    
+    @ensure_non_empty_string('table_name')
+    @ensure_attributes('table_service_client')
+    def select_entity(self, table_name:str, query_filter:str, parameters: Dict[str, Any]=None, select: str|List[str]=None, results_per_page: int=None) -> bool:
+        '''
+        Deletes an entity from a specifc table
+        
+
+        Parameters
+        ----------
+        table_name : str
+            The name of the table where the entity will be created.
+        partition_key : str
+            The name of the partition
+        row_key : str
+            The name of the row
+            
+        Returns
+        ----------
+        bool
+            True if the table was successfully deleted.
+
+        Raises
+        ------
+        ValueError
+            If the table_name, partition_key or row_key is empty, invalid.
+            If create_connection() was not called to initialize table_service_client.
+        HttpResponseError
+            If the request to the Azure Table service fails (e.g., invalid credentials of table not found).
+        ServiceRequestError
+            If there is a network or service connectivity issue.
+        '''
+                
+        tables = self.get_table_names()
+        if table_name not in tables:
+            raise ValueError(f'"{table_name}" not found.')
+        
+        try:
+            table_client = self.table_service_client.get_table_client(table_name=table_name)
+        except (HttpResponseError, ServiceRequestError) as e:
+            raise type(e)(f'Failed to get a Table Client for the table "{table_name}": {str(e)}') from e
+        
+        try:
+            query = table_client.query_entities(query_filter=query_filter, parameters=parameters, select=select, results_per_page=results_per_page)
+            
+            return query
+        except (HttpResponseError, ServiceRequestError) as e:
+                raise type(e)(f'Failed to delete entity from the table "{table_name}": {str(e)}') from e
 
 
 if __name__ == '__main__':
@@ -332,29 +380,62 @@ if __name__ == '__main__':
     _accountname = os.getenv('accountname')
     _accesskey = os.getenv('access_key')
     
-
     table_conn = AzureStorageTableClient(
         account_name=_accountname,
         access_key=_accesskey
     )
 
     table_conn.create_connection()
-    table_conn.update_create_entity(table_name='TableTest', entity=[{'PartitionKey': 'MTVH', 'RowKey': 'Action 0', 'Name': 'Ra'}])
     
-    # #CREATE TABLE
     
-    # # table_conn.create_table(table_name='TableTest')
+    # QUERY
+    start = perf_counter()
+    a = table_conn.select_entity(
+        table_name='TableTest',
+        query_filter="PartitionKey eq 'MTVH'",
+        select='RowKey',
+        results_per_page=1000
+    )
+    x = next(a.by_page())
+    end = perf_counter()
+    total = end-start
+    print(total)
+
     
-    # #CREATE RECORDS
-    # # table_conn.update_create_entity(
-    # #     table_name='TableTest',
-    # #     entity=[
-    # #         {'PartitionKey': 'MTVH', 'RowKey': f'Action {item}', 'Time': perf_counter()}
-    # #         for item in range(2000)
-    # #     ]
-    # # )
+    temp = []
+    start1 = perf_counter()
+    for item in x:
+        temp.append(item)
+    end1 = perf_counter()
+    total1 = end1-start1
+    print(total1)
+    print(len(temp))
+    
+    
+    
+    # start = perf_counter()
+    # print(len(list(a)))
+    # end = perf_counter()
+    # total = end-start
+    # print(total)
+
+
+    
+    
+    #CREATE TABLE
+    # table_conn.create_table(table_name='TableTest')
+    
+    # # CREATE/UPDATE RECORDS
+    # table_conn.update_create_entity(
+    #     table_name='TableTest',
+    #     entity=[
+    #         {'PartitionKey': 'MTVH', 'RowKey': f'Action {item}', 'Time': perf_counter()}
+    #         for item in range(2000)
+    #     ]
+    # )
+
+    # table_conn.update_create_entity(
+    #         table_name='TableTest',
+    #         entity=[{'PartitionKey': 'MTVH', 'RowKey': 'Action 10', 'Name': 'Robson'}]
+    #     )
  
-
-    
-
-
