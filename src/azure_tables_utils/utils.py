@@ -83,3 +83,38 @@ def create_entity_batch(mode: Literal['merge', 'replace'], entity:List[dict]) ->
             count = 0
         
     return batch
+
+
+class Operators:
+    EQUAL = 'eq'
+    NOTQUAL = 'ne'
+
+class Query(Operators):
+    
+    def __init__(self):
+        self._query = ''
+    
+    def set_column(self, columne_name: str):
+        self._query += f"{columne_name} "
+        return self
+    
+    def set_str_value(self, value: str):
+        self._query += f"'{value}' "
+        return self
+
+    def set_operator(self, operator: Operators):
+        self._query += f"{operator} "
+        return self
+    
+    def get_query(self):
+        return self._query
+
+
+if __name__ == '__main__':
+    query = (Query()
+            .set_column('Name')
+            .set_operator(operator=Operators.EQUAL)
+            .set_str_value('Rafael')
+            .get_query())
+    
+    # def fazer(Query())

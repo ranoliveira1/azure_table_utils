@@ -1,9 +1,67 @@
 from azure.data.tables import TableServiceClient, TableClient, UpdateMode
 from azure.core.credentials import AzureNamedKeyCredential
 from azure.core.exceptions import HttpResponseError, ServiceRequestError, ResourceExistsError
-from typing import List, Literal, Dict, Any
+from typing import List, Literal, Dict, Any, Iterator
 import re, copy
 from utils import ensure_attributes, ensure_non_empty_string, create_entity_batch
+
+
+
+class Operator:
+    EQUAL = 'eq'
+    NOTQUAL = 'ne'
+    GREATERTHAN = 'gt'
+    GREATERTHANOREQUAL = 'ge'
+    LESSTHAN = 'lt'
+    LESSTHANOREQUAL = 'le'
+    AND = 'and'
+    NOT = 'not'
+    OR = 'or'
+
+    
+class QueryBuilder:
+    
+    def __init__(self):
+        self._query = ''
+    
+    def set_column(self, columne_name: str):
+        '''
+        Name of the column to operate the questy
+        '''
+        self._query += f"{columne_name} "
+        return self
+    
+    def set_value(self, value: str | int | float | bool):
+        '''
+        General value (string, integer, float of bool) to be used in the query after the operator
+        '''
+        if isinstance(value, str):
+            self._query += f"'{value}' "
+        elif isinstance(value, (int, float)):
+            self._query += f"{value} "
+        elif isinstance(value, bool):
+            self._query += f"{str(value).lower()} "
+        return self
+    
+    def set_value_datetime(self, value: str):
+        '''
+        Value must have the format 'YYYY-MM-DDTHH:MM:SSZ'
+        '''
+        self._query += f"datetime{value} "
+        return self
+
+    def set_operator(self, operator: Operator):
+        '''
+        Operator like EQUAL to be used between a column and a value
+        '''
+        self._query += f"{operator} "
+        return self
+    
+    def get_query(self):
+        '''
+        Retrieve a string with all components of the query
+        '''
+        return self._query
 
 
 
@@ -280,7 +338,7 @@ class AzureStorageTableClient:
         Parameters
         ----------
         table_name : str
-            The name of the table where the entity will be created.
+            The name of the table where the entity will be deleted from.
         partition_key : str
             The name of the partition
         row_key : str
@@ -324,24 +382,46 @@ class AzureStorageTableClient:
     
     @ensure_non_empty_string('table_name')
     @ensure_attributes('table_service_client')
-    def select_entity(self, table_name:str, query_filter:str, parameters: Dict[str, Any]=None, select: str|List[str]=None, results_per_page: int=None) -> bool:
+    def select_entity(self, table_name:str, query_filter:str, parameters: Dict[str, Any]=None, select: str|List[str]=None, results_per_page: int=None) -> Iterator:
         '''
-        Deletes an entity from a specifc table
+        Make a query to the Azure Storage Table. You can use the class QueryBuilder to create the query.
+        There are two ways to create a query:
+            a) Using only the parameter 'query_filter'
+                query_filter="LastName ge 'A' and LastName lt 'B'"
+            
+            b) Using only the parameter 'query_filter' with the class QueryBuilder
+                query_filter = (QueryBuilder()
+                                .set_column('LastName')
+                                .set_operator(Operator.GREATERTHANOREQUAL)
+                                .set_value('A')
+                                .set_column('LastName')
+                                .set_operator(Operator.LESSTHAN)
+                                .set_value('B')
+                                .get_query()
+                                )
+            
+            c) Using both the parameters 'query_filter' and 'parameters'
+                parameters = {"first": first_name, "last": last_name}
+                query_filter = "FirstName eq @first or LastName eq @last"
         
 
         Parameters
         ----------
         table_name : str
-            The name of the table where the entity will be created.
-        partition_key : str
-            The name of the partition
-        row_key : str
-            The name of the row
+            The name of the table where the query will be make to.
+        query_filter : str
+            The query itself according to one of the templates ahead
+        parameters : dict
+            Optional. The parameters to be passed into the query if used the templace C ahead
+        select : str | List[str]
+            Opional. A string or a list of strings representing the columns to be retrieved by the query
+        results_per_page : int
+            Optional. The query returns a paginated interators. 'results_per_page' defines the total of records per page. The default is 1000 records. 
             
         Returns
         ----------
-        bool
-            True if the table was successfully deleted.
+        Iterator
+            Iterador made up of pages in each page having the records
 
         Raises
         ------
@@ -370,72 +450,3 @@ class AzureStorageTableClient:
         except (HttpResponseError, ServiceRequestError) as e:
                 raise type(e)(f'Failed to delete entity from the table "{table_name}": {str(e)}') from e
 
-
-if __name__ == '__main__':
-    import os
-    from time import perf_counter
-    from dotenv import load_dotenv
-    
-    load_dotenv()
-    _accountname = os.getenv('accountname')
-    _accesskey = os.getenv('access_key')
-    
-    table_conn = AzureStorageTableClient(
-        account_name=_accountname,
-        access_key=_accesskey
-    )
-
-    table_conn.create_connection()
-    
-    
-    # QUERY
-    start = perf_counter()
-    a = table_conn.select_entity(
-        table_name='TableTest',
-        query_filter="PartitionKey eq 'MTVH'",
-        select='RowKey',
-        results_per_page=1000
-    )
-    x = next(a.by_page())
-    end = perf_counter()
-    total = end-start
-    print(total)
-
-    
-    temp = []
-    start1 = perf_counter()
-    for item in x:
-        temp.append(item)
-    end1 = perf_counter()
-    total1 = end1-start1
-    print(total1)
-    print(len(temp))
-    
-    
-    
-    # start = perf_counter()
-    # print(len(list(a)))
-    # end = perf_counter()
-    # total = end-start
-    # print(total)
-
-
-    
-    
-    #CREATE TABLE
-    # table_conn.create_table(table_name='TableTest')
-    
-    # # CREATE/UPDATE RECORDS
-    # table_conn.update_create_entity(
-    #     table_name='TableTest',
-    #     entity=[
-    #         {'PartitionKey': 'MTVH', 'RowKey': f'Action {item}', 'Time': perf_counter()}
-    #         for item in range(2000)
-    #     ]
-    # )
-
-    # table_conn.update_create_entity(
-    #         table_name='TableTest',
-    #         entity=[{'PartitionKey': 'MTVH', 'RowKey': 'Action 10', 'Name': 'Robson'}]
-    #     )
- 
