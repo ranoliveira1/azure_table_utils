@@ -19,15 +19,12 @@ The `AzureStorageTableClient` class provides a robust interface to interact with
 
 - Python 3.7 or higher
 - Azure Storage Table account with `account_name` and `access_key`
-- `azure-data-tables` package
+- `azure-data-tables` (included in the repository)
 - `utils.py` (included in the repository)
 
 ## Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/ranoliveira1/azure_table_utils.git
-   cd azure_table_utils
+pip install azure_table_client
 
 
 
@@ -35,7 +32,7 @@ The `AzureStorageTableClient` class provides a robust interface to interact with
 Create an instance of AzureStorageTableClient with your account name and access key.
 python
 
-from azure_table_client import AzureStorageTableClient
+from azure_table_client import AzureStorageTableClient, BuilderQuery, Operator
 import os
 
 ## Initialize with environment variables
