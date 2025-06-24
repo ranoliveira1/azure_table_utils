@@ -32,8 +32,12 @@ pip install azure_table_client
 Create an instance of AzureStorageTableClient with your account name and access key.
 python
 
+
+## Install the package
 from azure_table_client import AzureStorageTableClient, BuilderQuery, Operator
+
 import os
+
 
 ## Initialize with environment variables
 - account_name = os.getenv("AZURE_STORAGE_ACCOUNT_NAME")

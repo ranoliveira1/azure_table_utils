@@ -117,4 +117,4 @@ if __name__ == '__main__':
             .set_str_value('Rafael')
             .get_query())
     
-    # def fazer(Query())
+    

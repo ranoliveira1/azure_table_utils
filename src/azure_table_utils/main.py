@@ -3,7 +3,7 @@ from azure.core.credentials import AzureNamedKeyCredential
 from azure.core.exceptions import HttpResponseError, ServiceRequestError, ResourceExistsError
 from typing import List, Literal, Dict, Any, Iterator
 import re, copy
-from utils import ensure_attributes, ensure_non_empty_string, create_entity_batch
+from .utils import ensure_attributes, ensure_non_empty_string, create_entity_batch
 
 
 
