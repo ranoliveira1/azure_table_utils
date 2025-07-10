@@ -121,6 +121,7 @@ Deletes an entity from a specific table.
 ## 6. select_entity(self, table_name:str, query_filter:str, parameters: Dict[str, Any]=None, select: str|List[str]=None, results_per_page: int=None) -> Iterator
 Make a query to the Azure Storage Table. You can use the class QueryBuilder to create the query.
 There are two ways to create a query:
+            
             6.1 Using only the parameter 'query_filter'
                 query_filter="LastName ge 'A' and LastName lt 'B'"
             
