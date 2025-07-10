@@ -9,7 +9,7 @@ The `AzureStorageTableClient` class provides a robust interface to interact with
 - Create, delete, and list tables.
 - Create or update entities in batches (up to 100 entities per transaction).
 - Delete entities by `PartitionKey` and `RowKey`.
-- Validates inputs (e.g., table names, required entity keys).
+- Validates inputs (e.g., table names, required entity keys, replace blank space to "_" in the columns/properties names). Azure Table does not accept blank space in the columns/properties. 
 - Handles Azure service and network errors (e.g., DNS issues, invalid credentials).
 
 ## Requirements
