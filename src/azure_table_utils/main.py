@@ -301,7 +301,10 @@ class AzureStorageTableClient:
                 raise ValueError('Each dictionary must have the keys "PartitionKey" and "RowKey".')
             if not isinstance(item.get('PartitionKey'), str):
                 raise ValueError('The value for the key "PartitionKey" must be a non-empty string.')
-        
+            
+            keys = [obj for obj in item.keys()]
+            for key in keys:
+                item[key.replace(' ', '_')] = item.pop(key)
 
         try:
             self.create_table(table_name=table_name)
