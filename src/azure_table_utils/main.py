@@ -252,7 +252,7 @@ class AzureStorageTableClient:
     def update_create_entity(self, table_name:str, entity:List[dict], mode:Literal['merge', 'replace']='merge') -> None:
         '''
         If the table does not exist, it creates.
-        Calls the function create_entity_batch() to create a list of lists with maximun of 100 entities.
+        Calls the function create_entity_batch() to create a list of lists with maximun of 100 entities each.
         Creates/Updates an entity (similar to a row) to a table in the Azure Table of the Azure Storage account
         If it already exists an entity with the same PartitionKey and RowKey, it will be updated with the mode:
             - UpdateMode.REPLACE, replacing the existing entity with the given one, deleting any existing properties not included in the submitted entity
@@ -266,7 +266,7 @@ class AzureStorageTableClient:
         table_name : str
             The name of the table where the entity will be created.
         entity : List[dict]
-            A list of at least one dictionary, having this minimal elements {'PartitionKey': <non-empty string>, 'RowKey': <string>}
+            A list of at least one dictionary, having this minimal elements {'PartitionKey': <non-empty string>, 'RowKey': <string>}. Additional keys must not have ponctuation or space. Any punctuation is replaced by "_"
         mode : Literal['merge', 'replace']
             The mode up the updating the entity:
                 - replace, replacing the existing entity with the given one, deleting any existing properties not included in the submitted entity
@@ -304,7 +304,7 @@ class AzureStorageTableClient:
             
             keys = [obj for obj in item.keys()]
             for key in keys:
-                item[key.replace(' ', '_')] = item.pop(key)
+                item[re.sub(r'[^a-zA-z]', '_', key)] = item.pop(key)
 
         try:
             self.create_table(table_name=table_name)

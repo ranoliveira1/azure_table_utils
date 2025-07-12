@@ -79,13 +79,13 @@ Checks if the table exists using the method `get_table_names()`. Deletes a table
 
 
 ## 4. update_create_entity(self, table_name:str, entity:List[dict], mode:Literal['merge', 'replace']='merge') -> None
-If the table does not exist, it creates. Calls the function `create_entity_batch()` to create a list of lists with a maximum of 100 entities. Creates/Updates an entity (similar to a row) to a table in the Azure Table of the Azure Storage account. If an entity with the same `PartitionKey` and `RowKey` already exists, it will be updated with the mode:
+If the table does not exist, it creates. Calls the function `create_entity_batch()` to create a list of lists with a maximum of 100 entities each. Creates/Updates an entity (similar to a row) to a table in the Azure Table of the Azure Storage account. If an entity with the same `PartitionKey` and `RowKey` already exists, it will be updated with the mode:
 - `UpdateMode.REPLACE`: Replacing the existing entity with the given one, deleting any existing properties not included in the submitted entity.
 - `UpdateMode.MERGE`: Updating the existing entity only on the properties provided as argument.
 
 ### Parameters
 - **table_name** (`str`): The name of the table where the entity will be created.
-- **entity** (`List[dict]`): A list of at least one dictionary, having these minimal elements `{'PartitionKey': <non-empty string>, 'RowKey': <string>}`.
+- **entity** (`List[dict]`): A list of at least one dictionary, having these minimal elements `{'PartitionKey': <non-empty string>, 'RowKey': <string>}`. Additional keys must not have ponctuation or space. Any punctuation is replaced by "_"
 - **mode** (`Literal['merge', 'replace']`): The mode for updating the entity:
   - `replace`: Replacing the existing entity with the given one, deleting any existing properties not included in the submitted entity.
   - `merge`: Updating the existing entity only on the properties provided as argument.
