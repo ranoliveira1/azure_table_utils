@@ -197,7 +197,6 @@ class AzureStorageTableClient:
         
         try:
             self.table_service_client.create_table(table_name=table_name)
-            print(f'Table "{table_name}" successfully created')
             return True
         
         except (HttpResponseError, ServiceRequestError) as e:
@@ -240,7 +239,6 @@ class AzureStorageTableClient:
         
         try:
             self.table_service_client.delete_table(table_name=table_name)
-            print(f'Table "{table_name}" successfully deleted')
             return True
         
         except (HttpResponseError, ServiceRequestError) as e:
@@ -308,9 +306,9 @@ class AzureStorageTableClient:
 
         try:
             self.create_table(table_name=table_name)
-            print(f'Created table "{table_name}"')
+            
         except ResourceExistsError:
-            print('Table already exists')
+            ...
         
 
         try:
@@ -326,7 +324,7 @@ class AzureStorageTableClient:
         for batch in batchs:
             try:
                 table_client.submit_transaction(batch)
-                print('Entities successfully updated')
+                
             except (HttpResponseError, ServiceRequestError) as e:
                 raise type(e)(f'Failed to create entities in the table "{table_name}"; entities {batch}: {str(e)}') from e
 
@@ -377,7 +375,7 @@ class AzureStorageTableClient:
         
         try:
             table_client.delete_entity(partition_key=partition_key, row_key=row_key)
-            print(f'Entity successfully deleted')
+            
             return True
         except (HttpResponseError, ServiceRequestError) as e:
                 raise type(e)(f'Failed to delete entity {partition_key, row_key} from the table "{table_name}": {str(e)}') from e
