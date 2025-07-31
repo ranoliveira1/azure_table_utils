@@ -76,14 +76,15 @@ class AzureStorageTableClient:
     access_key : str
         The access key of the Storage account
     credential : AzureNamedKeyCredential
-        The credential object used for authentication with the Azure Table service, created after calling create_connection().
+        The credential object used for authentication with the Azure Table service, created after calling _create_connection().
     table_service_client : TableServiceClient
-        The client object used to interact with the Azure Table service, created after calling create_connection().
+        The client object used to interact with the Azure Table service, created after calling _create_connection().
 
     Methods
     -------
     '''
     
+    # == Initialization ==
     def __init__(self, account_name:str=None, access_key:str=None) -> None:
         '''
         Parameters
@@ -97,9 +98,10 @@ class AzureStorageTableClient:
         self.access_key = access_key
         self.table_service_client = None
 
-        self.create_connection()
+        self._create_connection()
         
-        
+
+    # == Internal method to get credencials =    
     def _get_credential(self) -> AzureNamedKeyCredential:
         '''
         Creates and returns an AzureNamedKeyCredential object if account_name and access_key are provided.
@@ -111,8 +113,9 @@ class AzureStorageTableClient:
         else:
             return AzureNamedKeyCredential(self.account_name, self.access_key)
         
-        
-    def create_connection(self) -> None:
+
+    # == Internal method to create a connection ==
+    def _create_connection(self) -> None:
         '''
         Creates a connection to the Azure Table service by initializing the credential and table_service_client attributes.
 
@@ -133,7 +136,8 @@ class AzureStorageTableClient:
             endpoint=f"https://{self.account_name}.table.core.windows.net", credential=self.credential
         )
     
-    
+
+    # == Retrieve a list of all table names ==
     @ensure_attributes('table_service_client')
     def get_table_names(self) -> List[str]:
         '''
@@ -148,7 +152,7 @@ class AzureStorageTableClient:
         Raises
         ------
         AttributeError
-            If create_connection() was not called to initialize table_service_client.
+            If _create_connection() was not called to initialize table_service_client.
         HttpResponseError
             If the request to the Azure Table servgice fails (e.g., invalid credentials of table not found).
         ServiceRequestError
@@ -163,6 +167,7 @@ class AzureStorageTableClient:
             raise type(e)(f'Failed to retrieve the table names: {str(e)}') from e
 
 
+    # == Create a table ==
     @ensure_attributes('table_service_client')
     @ensure_non_empty_string('table_name')
     def create_table(self, table_name:str) -> bool:
@@ -185,7 +190,7 @@ class AzureStorageTableClient:
         ValueError
             If the 'table_name' was not alphanumeric, was not between 3-63 characters long or if it begins with a number.
         AttributeError
-            If create_connection() was not called to initialize table_service_client.
+            If _create_connection() was not called to initialize table_service_client.
         HttpResponseError
             If the request to the Azure Table servgice fails (e.g., invalid credentials of table not found).
         ServiceRequestError
@@ -203,6 +208,7 @@ class AzureStorageTableClient:
             raise type(e)(f'Failed to create table "{table_name}": {str(e)}') from e
 
 
+    # == Delete a table ==
     @ensure_attributes('table_service_client')
     @ensure_non_empty_string('table_name')
     def delete_table(self, table_name:str) -> bool:
@@ -226,7 +232,7 @@ class AzureStorageTableClient:
         ValueError
             If the table_name is empty, invalid, or not found in the storage account.
         AttributeError
-            If create_connection() was not called to initialize table_service_client.
+            If _create_connection() was not called to initialize table_service_client.
         HttpResponseError
             If the request to the Azure Table servgice fails (e.g., invalid credentials of table not found).
         ServiceRequestError
@@ -244,7 +250,8 @@ class AzureStorageTableClient:
         except (HttpResponseError, ServiceRequestError) as e:
             raise type(e)(f'Failed to delete table "{table_name}": {str(e)}') from e
 
-
+    
+    # == Update or Create an entity (a row) ==
     @ensure_attributes('table_service_client')
     @ensure_non_empty_string('table_name')
     def update_create_entity(self, table_name:str, entity:List[dict], mode:Literal['merge', 'replace']='merge') -> None:
@@ -280,7 +287,7 @@ class AzureStorageTableClient:
             If the table_name is empty, invalid.
             if the entity  is not a non-empty list of non-empty dictionaries, or if its dictionaries do not have the keys 'PartitionKey' nor 'RowKey'
         AttributeError
-            If create_connection() was not called to initialize table_service_client.
+            If _create_connection() was not called to initialize table_service_client.
         Exception
             If create_entity_batch() returns error
         HttpResponseError
@@ -328,7 +335,8 @@ class AzureStorageTableClient:
             except (HttpResponseError, ServiceRequestError) as e:
                 raise type(e)(f'Failed to create entities in the table "{table_name}"; entities {batch}: {str(e)}') from e
 
-
+    
+    # == Delete an entity (a row) ==
     @ensure_non_empty_string('table_name')
     @ensure_attributes('table_service_client')
     def delete_entity(self, table_name:str, partition_key:str, row_key:str) -> bool:
@@ -354,7 +362,7 @@ class AzureStorageTableClient:
         ------
         ValueError
             If the table_name, partition_key or row_key is empty, invalid.
-            If create_connection() was not called to initialize table_service_client.
+            If _create_connection() was not called to initialize table_service_client.
         HttpResponseError
             If the request to the Azure Table service fails (e.g., invalid credentials of table not found).
         ServiceRequestError
@@ -375,12 +383,13 @@ class AzureStorageTableClient:
         
         try:
             table_client.delete_entity(partition_key=partition_key, row_key=row_key)
-            
+            table_client.delete_entity
             return True
         except (HttpResponseError, ServiceRequestError) as e:
                 raise type(e)(f'Failed to delete entity {partition_key, row_key} from the table "{table_name}": {str(e)}') from e
 
     
+    # == Select an entity (a row) ==
     @ensure_non_empty_string('table_name')
     @ensure_attributes('table_service_client')
     def select_entity(self, table_name:str, query_filter:str, parameters: Dict[str, Any]=None, select: str|List[str]=None, results_per_page: int=None) -> Iterator:
@@ -428,7 +437,7 @@ class AzureStorageTableClient:
         ------
         ValueError
             If the table_name, partition_key or row_key is empty, invalid.
-            If create_connection() was not called to initialize table_service_client.
+            If _create_connection() was not called to initialize table_service_client.
         HttpResponseError
             If the request to the Azure Table service fails (e.g., invalid credentials of table not found).
         ServiceRequestError
