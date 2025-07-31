@@ -13,7 +13,7 @@ The `AzureStorageTableClient` class provides a robust interface to interact with
 - Handles Azure service and network errors (e.g., DNS issues, invalid credentials).
 
 ## Requirements
-- Python 3.7 or higher
+- Python 3.11.9 or higher
 - Azure Storage Table account with `account_name` and `access_key`
 - `azure-data-tables` (included in the repository)
 - `utils.py` (included in the repository)
